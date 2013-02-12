@@ -1,4 +1,4 @@
-Open Data science Training
+Open Data Science Training
 =========================
 
 What
@@ -26,3 +26,6 @@ Where
 -----
 
 ...
+=======
+opendst
+=======
