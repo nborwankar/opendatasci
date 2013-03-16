@@ -1,0 +1,12 @@
+
+* loan data
+
+* churn data set - telco
+
+* mobile data - human activity recognition 
+
+====
+
+after 0.1
+
+* web analytics - join with internal data - need synthetic customer

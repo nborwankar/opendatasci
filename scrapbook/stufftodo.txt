@@ -1,0 +1,32 @@
+
+====
+
+* create a list of principles that will be followed
+
+
+
+20-30 mins
+copy rename images
+create URL's for embedding into notebook
+put in place
+
+
+rewrite text
+
+-- do single var regression diagram
+
+-- create doc with new images for exploration
+
+
+use ggplot 
+
+add color to single var plot
+
+create colored hist, scatterplot, box plot in ggplot
+
+use ggplot to plot exponential
+
+use ggplot to plot binomial data
+
+
+

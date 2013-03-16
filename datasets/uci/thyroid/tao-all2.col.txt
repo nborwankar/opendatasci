@@ -1,0 +1,12 @@
+obs
+year
+month
+day
+date
+latitude
+longitude
+zon.winds
+mer.winds
+humidity
+air temp.
+s.s.temp.

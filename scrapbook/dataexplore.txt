@@ -1,0 +1,125 @@
+
+
+
+time series
+effect and causal
+log data
+
+
+characterise the data
+
+
+information content
+box plot 
+
+
+
+======
+
+
+correlation matrix
+box plots
+histogram
+summary 
+
+domain knowledge
+
+-- explore many columns
+-- combination of domain knowledge
+-- 
+
+
+PCA
+
+
+===================
+
+
+* how do I predict a quantity in terms of the things that affect it?
+
+A simple modeling technique
+
+* how do I model proportional dependency between 
+
+using linear regression
+
+
+=====================
+
+
+replace age example with loan data ?
+
+
+====================
+
+
+add mathematical exposition to template
+simple expo
+( later more detail )
+just enough Math
+
+====================
+
+use the real world data set
+use middle section of the loan data 
+
+--------
+Explain 
+Explore
+Analyse
+(loop)
+--------
+
+
+====================
+
+
+
+
+How to present your results
+
+
+========
+
+Bare minimum 
+
+Measures of model quality
+|mean absolute % error|
+
+Add physics example
+
+
+================================
+
+
+
+
+
+=====================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
