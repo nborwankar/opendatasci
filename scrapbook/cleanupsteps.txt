@@ -1,0 +1,116 @@
+Steps to go from rough to alpha
+===============================
+===============================
+
+
+
+linear exposition 1 - 0.45  
+==========================
+
+* reformat linear expo
+* new diagrams errors
+* multiple straightlines on same data
+* add error discussion
+
+* which one is "best"
+* how to judge best
+* square error
+
+* new diagram ggplot linear reg loess over single variable
+
+* summary of what we learned
+
+
+linear exploration - 0.45
+=========================
+- histograms
+
+
+- box plots
+
+
+- scatter plot matrix
+
+
+* exploration - 
+
+
+* for now we are going to follow a standard set of steps in exploring data
+* we first clean it up
+* we then apply the following simple visualizations
+
+* histogram
+[[ what is it ]]
+
+* scatterplot matrix
+[[ what is it ]]
+
+
+* boxplot
+[[ ]]
+
+[[ discussion ]]
+
+The scatterplot matrix is the most useful here.
+But first what is it?
+
+It shows the relationship of each variable to the others.
+The ones on the diagonal are not meaningful since what does it mean to find the relationship of something to itself, in this context.
+So in this diagram, traditionally, they just contain the names of the variable.
+So if the 3rd variable is ... then the third row and third column are the ... column and row  
+To see how ... (3rd) affects ... (4th) then we look for the intersection of the third row and the 4th column
+Where there is some significant useful effect we will see a noticeable trend in the scatterplot at the intersection.
+What does that mean?
+
+Let's compare two such plots the one at the intersection of ... row and ... column
+We see that one of them shows no variation as we move along the x-axis. The other one shows a roughly linear trend.
+Similarly there is no obvious variation in plots ... and ... while there is a slight trend also in.
+
+So what does this suggest?
+
+It suggests that we should use ... and ... in our model as independent variables, while ... and ... dont seem to be useful.
+
+So at the end of this data alchemy exercise we have distilled our variables into two beakers - one has what we believe is relevant - the data nuggets and the other with the data dross, the variables that have no visible impact on our dependent variable.
+
+We're going to refine our output even further into a model in the next step - the analysis.
+
+
+
+linear analysis - 0.45
+===============
+
+analysis
+
+training model
+
+explain the output
+
+elementary intro to R^2 and P value
+
+
+[[ in the next set of lessons we will take one step further and actually use a model for prediction ]]
+
+
+
+test set
+(extracted sample of 200 points)
+
+================================
+
+Logistic
+========
+
+logistic reformat - 0.15
+
+
+logistic data set - 0.30
+* redo dataset for logistic
+
+
+Logistic Exploration
+
+
+
+
+
+

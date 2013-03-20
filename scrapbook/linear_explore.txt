@@ -1,0 +1,74 @@
+linear regression - exploration
+===============================
+
+- histograms
+
+
+- box plots
+
+
+- scatter plot matrix
+
+
+* exploration - 
+
+
+* for now we are going to follow a standard set of steps in exploring data
+* we first clean it up
+* we then apply the following simple visualizations
+
+* histogram
+A histogram shows us the shape of the ditribution of values for a **single** variable.
+On the x-axis we have the variable under question, divided into buckets or bins.  This is a key feature of a histogram.
+The bin size is adjustable and different bin sizes give different information.  A large bin size gives us an idea of the coarser grained structure of the distribution while a smaller bin size will shine light on the finer details of the distribution.  In either case we can compare distributions, or quickly identify some key hints that tell use how best to proceed.
+
+For instancew when we look at the distribution of interest rates we see
+
+
+And with the distribution of FICO scores we see.
+
+
+How are these two related? Why is there a bimodal shape in ...?
+
+These tell us that the distribution is not a normal or gaussian distribution but that there are some other factors that might be affecting or distorting the shape of the distribution away from the bell curve.  We want to dig a little deeper.
+
+
+At first we take a box plot which allows us to quickly look at the distribution of interest rates based on each FICO score range.  First of all this tells us that there is a general downward trend in interest rate for higher FICO scores.
+We see also that for the same FICO score we have a range of interest rates. So what else might be affecting the interest rate.
+
+Interest rate is based on risk to the borrower, teh greater the risk, the greater the interest rate charged to compensate for the risk.
+
+So another factor that might affect risk is size of the loan - the larger the amount the greater the risk of non-payment and also the greater the negative impact of actual default.
+
+So we want to look at multiple factors and how they might affect the interest rate.
+
+A great way to do this is the scatterplot matrix.
+
+* scatterplot matrix
+But first what is it?
+
+The scattre plot matrix is a grid of plots of multiple variables against eacg other.
+It shows the relationship of each variable to the others.
+The ones on the diagonal are not meaningful since what does it mean to find the relationship of something to itself, in this context.  Not much.
+
+So in this diagram, traditionally, the boxes on the diagonal just contain the names of the variable.
+
+So if the 3rd variable is ... then the third row and third column are the ... column and row  
+
+To see how ... (3rd) affects ... (4th) then we look for the intersection of the third row and the 4th column
+
+Where there is some significant useful effect we will see a noticeable trend in the scatterplot at the intersection.
+What does that mean?
+
+Let's compare two such plots the one at the intersection of ... row and ... column
+We see that one of them shows no variation as we move along the x-axis. The other one shows a roughly linear trend.
+Similarly there is no obvious variation in plots ... and ... while there is a slight trend also in.
+
+So what does this suggest?
+
+It suggests that we should use ... and ... in our model as independent variables, while ... and ... dont seem to be useful.
+
+So at the end of this data alchemy exercise we have distilled our variables into two beakers - one has what we believe is relevant - the data nuggets and the other with the data dross, the variables that have no visible impact on our dependent variable.
+
+We're going to refine our output even further into a model in the next step - the analysis.
+
