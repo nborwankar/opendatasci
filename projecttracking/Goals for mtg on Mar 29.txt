@@ -1,0 +1,9 @@
+Goals for mtg on Fri 29th
+-------------------------
+
+* Finish linear reg
+* Finish logistic reg
+* Have a plan for next two weeks
+** plan for k-means content
+** plan for how to use Mobile dataset for k-means
+** plan for how to use it for 

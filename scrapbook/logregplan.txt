@@ -1,0 +1,19 @@
+
+** change the 
+
+** linear analysis - get it working - tonite
+
+
+
+
+* logistic regression - analysis
+* create a bivariate logistic model
+-- loan amt
+-- my fico
+
+
+* obtain the best amt I can get for a desired interest rate range
+* obtain the best int rate I can get for a desired amt range
+
+
+
