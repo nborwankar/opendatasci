@@ -1,0 +1,704 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" id="typepad-standard" xmlns:fb="http://www.facebook.com/2008/fbml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="generator" content="http://www.typepad.com/" />
+	<meta name="keywords" content="kmeans, cluster analysis, big data,
+parallel code" />
+	<meta name="description" content="In this post Joseph Rickert demonstrates how to build a classification model on a large data set with the RevoScaleR package. A script file for use with Revolution R Enterprise to recreate the analysis below is at the end of the post, and can also be downloaded here -- ed. The k-means (Lloyd) algorithm, an intuitive way to explore the structure of a data set, is a work horse in the data mining world. The idea is to view the observations in an N variable data set as a region in N dimensional space and to see if the points..." />
+	<link rel="stylesheet" href="http://blog.revolutionanalytics.com/styles.css?v=6" type="text/css" media="screen" />
+	<link rel="stylesheet" href="http://static.typepad.com/.shared:v20130326.01-0-g8486136:typepad:en_us/themes/common/print.css" type="text/css" media="print" />
+	<link rel="alternate" type="application/atom+xml" title="Posts on 'Revolutions' (Atom)" href="http://blog.revolutionanalytics.com/atom.xml" />
+	<link rel="alternate" type="application/rss+xml" title="Posts on 'Revolutions' (RSS 1.0)" href="http://blog.revolutionanalytics.com/index.rdf" />
+	<link rel="alternate" type="application/rss+xml" title="Posts on 'Revolutions' (RSS 2.0)" href="http://blog.revolutionanalytics.com/rss.xml" />
+	<script type="text/javascript">
+		var TPApp = {};
+		TPApp.app_uri = "http://www.typepad.com/";
+	</script>
+	<script type="text/javascript" src="http://static.typepad.com/.shared:v20130326.01-0-g8486136:typepad:en_us/js/yui/yahoo-dom-event.js,/js/app/thumbnail-gallery-min.js"></script>
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['t2._setAccount', 'UA-225723-36']);
+		_gaq.push(['t2._setDomainName', 'none']);
+		_gaq.push(['t2._setAllowLinker', true]);
+        _gaq.push(['t2._setCustomVar', 1, 'Blog', '6a010534b1db25970b010536040741970b', 3]);
+        _gaq.push(['t2._setCustomVar', 2, 'Page Type', 'Individual', 3]);
+		_gaq.push(['t2._trackPageview']);
+
+		(function() {
+		  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+	<link rel="alternate" type="application/atom+xml" title="Comments on 'K-Means Clustering on Big Data' (Atom)" href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data/comments/atom.xml" />
+	<link rel="alternate" type="application/rss+xml" title="Comments on 'K-Means Clustering on Big Data' (RSS 2.0)" href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data/comments/rss.xml" />
+	<title>K-Means Clustering on Big Data</title>
+	<link rel="start" href="http://blog.revolutionanalytics.com/" title="Home" />
+	<link rel="prev" href="http://blog.revolutionanalytics.com/2011/06/r-data-mining.html?no_prefetch=1" title="R for Data Mining" />
+	<link rel="next" href="http://blog.revolutionanalytics.com/2011/06/the-big-analytics-revolution-starts-with-r-webinar-june-14.html?no_prefetch=1" title="The 'Big Analytics' Revolution Starts with R: Webinar June 14" />
+
+</head>
+
+<body class="layout-two-column-right post">
+	
+	<div id="container">
+		<div id="container-inner" class="pkg">
+			
+			<!-- banner -->
+<div id="banner">
+	<div id="banner-inner" class="pkg">
+		
+		<h1 id="banner-header"><a href="http://blog.revolutionanalytics.com/" accesskey="1">Revolutions</a></h1>
+		<h2 id="banner-description">
+			Learn more about using open source R for big data analysis, predictive modeling, data science and more from the staff of Revolution Analytics.
+		</h2>
+	</div>
+</div>
+
+
+
+			<div id="pagebody">
+				<div id="pagebody-inner" class="pkg">
+					<div id="alpha">
+						<div id="alpha-inner" class="pkg">
+							<script src="http://static.typepad.com/.shared:v20130326.01-0-g8486136:typepad:en_us//js/jquery/jquery-1.4.2.min.js" type="text/javascript"></script>
+<!-- content nav -->
+<p class="content-nav">
+	<a href="http://blog.revolutionanalytics.com/2011/06/r-data-mining.html">&laquo; R for Data Mining</a> |
+	<a href="http://blog.revolutionanalytics.com/">Main</a>
+	| <a href="http://blog.revolutionanalytics.com/2011/06/the-big-analytics-revolution-starts-with-r-webinar-june-14.html">The 'Big Analytics' Revolution Starts with R: Webinar June 14 &raquo;</a>
+</p>
+<script type="text/javascript">
+   $(function(){
+       var query = window.location.search.substring(1);
+       if( query == "pintix=1" ) {
+          var e=document.createElement('script');e.setAttribute('type','text/javascript');e.setAttribute('charset','UTF-8');e.setAttribute('src','http://static.typepad.com/.shared:v20130326.01-0-g8486136:typepad:en_us//js/pinmarklet.js?r='+Math.random()*99999999);document.body.appendChild(e); 
+       }
+   });
+</script>
+<!-- entry -->
+	<h2 class="date-header">June 07, 2011</h2>
+
+
+<div class="entry-category-big_data entry-category-predictive_analytics entry-category-r entry-category-revolution entry-author-joseph_rickert entry-type-post entry" id="entry-6a010534b1db25970b015432631694970c">
+			<h3 class="entry-header">K-Means Clustering on Big Data</h3>
+	
+	<div class="entry-content">
+		<div class="entry-body">
+			<p><em>In this post Joseph Rickert demonstrates how to build a classification model on a large data set with the <a href="http://www.revolutionanalytics.com/products/enterprise-big-data.php" target="_self">RevoScaleR package</a>. A script file for use with <a href="http://www.revolutionanalytics.com/downloads/" target="_self">Revolution R Enterprise</a> to recreate the analysis below is at the end of the post, and can also be <a href="http://blog.revolutionanalytics.com/downloads/k-means%20clustering%20with%20RevoScaleR.R" target="_self">downloaded here</a> -- ed.</em></p>
+<p>The <a href="http://en.wikipedia.org/wiki/K-means_clustering" target="_self">k-means</a> (Lloyd) algorithm, an intuitive way to explore the structure of a data set, is a work horse in the data mining world. The idea is to view the observations in an N variable data set as a region in N dimensional space and to see if the points form themselves into clusters according to some method of measuring distance. To apply the k-means algorithm one takes a guess at the number of clusters (i.e. select a value for k) and picks k points (maybe randomly) to be the initial center of the clusters. The algorithm then proceeds by iterating through two steps:</p>
+<ol>
+<li>Assign each point to the cluster to which it is closest</li>
+<li>Use the points in a cluster at the m<sup>th</sup> step to compute the new center of the cluster for the (m +1)<sup>th</sup> step</li>
+</ol>
+<p>Eventually, the algorithm will settle on k final clusters and terminate. Figure 1 shows an example of k-means clustering on an artificial 2-dimensional data set. The data come from two different normal distributions, one centered at (0,0) and the other at (1,1). The large circles are show the points within</p>
+<p style="text-align: center;"><a href="http://revolution-computing.typepad.com/.a/6a010534b1db25970b01538e902f5a970b-pi" style="display: inline;"><img alt="Kmeans" border="0" class="asset  asset-image at-xid-6a010534b1db25970b01538e902f5a970b image-full" src="http://revolution-computing.typepad.com/.a/6a010534b1db25970b01538e902f5a970b-800wi" title="Kmeans" /></a><br />Figure 1:  k-means on artificial data</p>
+<p>one standard deviation of the true means. The smaller colored circles are the calculated centers of the clusters. For this artificial example, the two clusters do a pretty good job of describing the data. However, for real data the situation will generally not be so clear cut. There is no guarantee that clusters found will be globally optimal, and of course, since the choice of k was arbitrary, there is no reason to believe that the clusters really mean anything.</p>
+<p>Using k-means to get real work done means running the algorithm lots of times. The R implementation of the k-means algorithm, <span style="font-family: courier new,courier;"><a href="http://www.inside-r.org/r-doc/stats/kmeans" target="_self">kmeans</a></span> in the stats package, is pretty fast. Running the example above on my pc (1.87 GHz Dell laptop with 8 GB of RAM) on 10,000,000 points took about 4.3 seconds. But what if you have a data set that won’t fit into memory?</p>
+<p>For <a href="http://www.revolutionanalytics.com/products/revolution-enterprise.php" target="_self">Revolution R Enterprise</a> users this is no longer a problem. The RevoScaleR package in <a href="http://www.revolutionanalytics.com/news-events/news-room/2011/Revolution-R-Enterprise-4-3-Now-Available.php" target="_self">version 4.3</a> has a new k-means function, rxKmeans, implemented as an external memory algorithm that works on a chunk of data at a time. Since the k-means algorithm is “embarrassingly parallel”, rxKmeans reads chunks of data (rows / observations) at a time, and iterates the Lloyd algorithm on each chunk (in parallel if multiple processors are available). Once all of the chunks have been processed, the means are updated one last time to produce the final result. Figure 2 shows rxKmeans working on some real data, a slice of the 2000 5% IPUMS U.S. Census Data containing information on individuals from 20 to 65 years old in the states of Connecticut, Indiana and Washington. The data set contains slightly over 350,000 observations with six variables. The data shows income plotted against age and the four clusters found by the k-means algorithm are color coded.</p>
+<p>Figure 2: rxKmeans analysis of Census Data</p>
+<p><a href="http://revolution-computing.typepad.com/.a/6a010534b1db25970b01538e9030c5970b-pi" style="display: inline;"><img alt="RxKMeans" border="0" class="asset  asset-image at-xid-6a010534b1db25970b01538e9030c5970b image-full" src="http://revolution-computing.typepad.com/.a/6a010534b1db25970b01538e9030c5970b-800wi" title="RxKMeans" /></a>&#0160;</p>
+<p>The first thing to notice about the data is that apparently nobody in the three states involved makes between $175,000 and $300,000. As you probably guessed, this is an artifact of how the data were coded. Values of income higher than $175,000 were recorded as state means: hence, the three green lines. The choice of 4 clusters appears to be reasonable and k-means provides some insight . The horizontal clusters indicate that people group together more by income than by age, and the black dots which mark the centers of the clusters confirm that people generally get wealthier as they age. It took about 0.4 seconds to run this example on my laptop.</p>
+<p>Finally, just for fun, I ran the rxKmeans on the 123 million plus row airlines data set that I have described in a <a href="http://blog.revolutionanalytics.com/2011/04/new-functions-for-linear-model-inference-in-4-3.html" target="_self">previous blog post</a> looking for 2 clusters in a 7 dimensional space described by departure time, arrival time, air time, arrival delay, departure delay, taxi in time and taxi out time. I have no idea how to interpret the results, but the calculation ran in just under 6 minutes. My take away is that I ought to think about doing some serious k-means clustering on a really, really big data set.</p>
+
+		</div>
+					<a id="more"></a>
+			<div class="entry-more">
+				
+
+<div style="overflow: auto;">
+<div class="geshifilter">
+<pre class="r geshifilter-R" style="font-family: monospace;"><span style="color: #666666; font-style: italic;"># rxCluster Example</span>
+<a href="http://inside-r.org/r-doc/base/library"><span style="color: #003399; font-weight: bold;">library</span></a><span style="color: #009900;">(</span><a href="http://inside-r.org/packages/cran/ggplot2"><span>ggplot2</span></a><span style="color: #009900;">)</span>
+<span style="color: #666666; font-style: italic;"># Get small Census data file</span>
+sampleDataDir <span>&lt;-</span> rxGetOption<span style="color: #009900;">(</span><span style="color: #0000ff;">&quot;sampleDataDir&quot;</span><span style="color: #009900;">)</span>
+dataFile <span>&lt;-</span> <a href="http://inside-r.org/r-doc/base/file.path"><span style="color: #003399; font-weight: bold;">file.path</span></a><span style="color: #009900;">(</span> sampleDataDir<span style="color: #339933;">,</span> <span style="color: #0000ff;">&quot;CensusWorkers&quot;</span><span style="color: #009900;">)</span>
+rxGetInfoXdf<span style="color: #009900;">(</span>dataFile<span style="color: #339933;">,</span> getVarInfo=<span style="color: #000000; font-weight: bold;">TRUE</span><span style="color: #009900;">)</span>
+<span style="color: #666666; font-style: italic;"># Create an Xdf file to run rxKeans</span>
+rxDataStepXdf<span style="color: #009900;">(</span>inFile=dataFile<span style="color: #339933;">,</span> outFile=<span style="color: #0000ff;">&quot;AgeInc&quot;</span><span style="color: #339933;">,</span> 
+	varsToKeep = <a href="http://inside-r.org/r-doc/base/c"><span style="color: #003399; font-weight: bold;">c</span></a><span style="color: #009900;">(</span><span style="color: #0000ff;">&quot;age&quot;</span><span style="color: #339933;">,</span><span style="color: #0000ff;">&quot;incwage&quot;</span><span style="color: #009900;">)</span><span style="color: #339933;">,</span>overwrite=<span style="color: #000000; font-weight: bold;">TRUE</span><span style="color: #009900;">)</span>
+rxGetInfoXdf<span style="color: #009900;">(</span><span style="color: #0000ff;">&quot;AgeInc&quot;</span><span style="color: #339933;">,</span> getVarInfo=<span style="color: #000000; font-weight: bold;">TRUE</span><span style="color: #339933;">,</span> numRows=<span style="color: #cc66cc;">3</span><span style="color: #009900;">)</span>
+<span style="color: #666666; font-style: italic;"># Run rxKmeans</span>
+clust <span>&lt;-</span> rxKmeans<span style="color: #009900;">(</span><span>~</span> age <span>+</span> incwage<span style="color: #339933;">,</span><a href="http://inside-r.org/r-doc/utils/data"><span style="color: #003399; font-weight: bold;">data</span></a>= <span style="color: #0000ff;">&quot;AgeInc&quot;</span><span style="color: #339933;">,</span>numClusters = <span style="color: #cc66cc;">4</span><span style="color: #339933;">,</span> algorithm = <span style="color: #0000ff;">&quot;lloyd&quot;</span><span style="color: #339933;">,</span> 
+         outFile = <span style="color: #0000ff;">&quot;AgeInc&quot;</span><span style="color: #339933;">,</span> outColName = <span style="color: #0000ff;">&quot;Cluster&quot;</span><span style="color: #339933;">,</span> overwrite = <span style="color: #000000; font-weight: bold;">TRUE</span><span style="color: #009900;">)</span> 
+&#0160;
+<span style="color: #666666; font-style: italic;"># Plot Data and cluster centers</span>
+DF <span>&lt;-</span> rxXdfToDataFrame<span style="color: #009900;">(</span><a href="http://inside-r.org/r-doc/base/file"><span style="color: #003399; font-weight: bold;">file</span></a>=<span style="color: #0000ff;">&quot;AgeInc&quot;</span><span style="color: #009900;">)</span>
+DF<span>$</span>Cluster <span>&lt;-</span> <a href="http://inside-r.org/r-doc/base/factor"><span style="color: #003399; font-weight: bold;">factor</span></a><span style="color: #009900;">(</span>DF<span>$</span>Cluster<span style="color: #009900;">)</span>
+<a href="http://inside-r.org/r-doc/base/names"><span style="color: #003399; font-weight: bold;">names</span></a><span style="color: #009900;">(</span>DF<span style="color: #009900;">)</span> <span>&lt;-</span> <a href="http://inside-r.org/r-doc/base/c"><span style="color: #003399; font-weight: bold;">c</span></a><span style="color: #009900;">(</span><span style="color: #0000ff;">&quot;Age&quot;</span><span style="color: #339933;">,</span><span style="color: #0000ff;">&quot;Income&quot;</span><span style="color: #339933;">,</span><span style="color: #0000ff;">&quot;Cluster&quot;</span><span style="color: #009900;">)</span>
+p <span>&lt;-</span> <a href="http://inside-r.org/packages/cran/ggplot"><span>ggplot</span></a><span style="color: #009900;">(</span><span style="color: #009900;">)</span> <span>+</span> geom_point<span style="color: #009900;">(</span><a href="http://inside-r.org/r-doc/utils/data"><span style="color: #003399; font-weight: bold;">data</span></a>=DF<span style="color: #339933;">,</span>aes<span style="color: #009900;">(</span>x=Age<span style="color: #339933;">,</span>y=Income<span style="color: #339933;">,</span>colour=<a href="http://inside-r.org/r-doc/survival/cluster"><span>Cluster</span></a><span style="color: #009900;">)</span><span style="color: #009900;">)</span>
+DF2 <span>&lt;-</span> <a href="http://inside-r.org/r-doc/base/as.data.frame"><span style="color: #003399; font-weight: bold;">as.data.frame</span></a><span style="color: #009900;">(</span>clust<span>$</span>centers<span style="color: #009900;">)</span>
+<a href="http://inside-r.org/r-doc/base/names"><span style="color: #003399; font-weight: bold;">names</span></a><span style="color: #009900;">(</span>DF2<span style="color: #009900;">)</span> <span>&lt;-</span> <a href="http://inside-r.org/r-doc/base/c"><span style="color: #003399; font-weight: bold;">c</span></a><span style="color: #009900;">(</span><span style="color: #0000ff;">&quot;X&quot;</span><span style="color: #339933;">,</span><span style="color: #0000ff;">&quot;Y&quot;</span><span style="color: #009900;">)</span>
+layer2 <span>&lt;-</span> geom_point<span style="color: #009900;">(</span><a href="http://inside-r.org/r-doc/utils/data"><span style="color: #003399; font-weight: bold;">data</span></a>=DF2<span style="color: #339933;">,</span> aes<span style="color: #009900;">(</span>x=X<span style="color: #339933;">,</span>y=Y<span style="color: #009900;">)</span><span style="color: #009900;">)</span>
+p <span>+</span> layer2</pre>
+</div>
+</div>
+<p style="text-align: right;"><a href="http://www.inside-r.org/pretty-r" title="Created by Pretty R at inside-R.org">Created by Pretty R at inside-R.org</a></p>
+<p style="text-align: right;">&#0160;</p>
+			</div>
+		
+		
+	</div>
+	<div class="entry-footer">
+			<p class="entry-footer-info">
+				<span class="post-footers">Posted by <a rel="author" href="http://profile.typepad.com/josephrickert">Joseph Rickert</a> at 07:14 in <a href="http://blog.revolutionanalytics.com/big-data/">big data</a>, <a href="http://blog.revolutionanalytics.com/predictive-analytics/">predictive analytics</a>, <a href="http://blog.revolutionanalytics.com/r/">R</a>, <a href="http://blog.revolutionanalytics.com/revolution/">Revolution</a> </span> <span class="separator">|</span> <a class="permalink" href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html">Permalink</a>
+			</p>
+		
+		<!-- technorati tags -->
+
+
+		<!-- post footer links -->
+	<p class="entry-footer-share">
+		<span class="entry-footer-links-favorite"><iframe class="favorite" id="favbutton-6a010534b1db25970b015432631694970c" name="favbutton-6a010534b1db25970b015432631694970c" src="http://www.typepad.com/services/connect/favorite?to=http%253A%252F%252Fblog.revolutionanalytics.com%252F2011%252F06%252Fkmeans-big-data.html&asset_id=6a010534b1db25970b015432631694970c" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe></span>
+	</p>
+
+
+	</div>
+</div>
+
+		<div class="trackbacks">
+		<a id="trackback"></a>
+		<h3 class="trackbacks-header">TrackBack</h3>
+		<div class="trackbacks-info">
+			<p>TrackBack URL for this entry:<br /><span class="trackbacks-link">http://www.typepad.com/services/trackback/6a010534b1db25970b015432631694970c</span></p>
+			<p>Listed below are links to weblogs that reference <a href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html">K-Means Clustering on Big Data</a>:</p>
+		</div>
+		<div class="trackbacks-content">
+			
+		</div>
+	</div>
+
+
+
+
+
+
+
+        
+        <a id="comments"></a>
+	<div class="comments" id="all-comments">
+		<h3 class="comments-header">Comments</h3>
+					<div class="comments-info">
+				<p><a href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data/comments/atom.xml"><img src="http://static.typepad.com/.shared:v20130326.01-0-g8486136:typepad:en_us/images/feed.png" alt="Feed" width="10" height="10" /></a> You can follow this conversation by subscribing to the <a href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data/comments/atom.xml">comment feed</a> for this post.</p>
+			</div>
+		
+		<div class="comments-content" id="comments-content">
+                <!-- comment list --><a id="c6a010534b1db25970b01538f07b460970b"></a>
+<div class="comment comment-odd" id="comment-6a010534b1db25970b01538f07b460970b">
+	<div class="comment-content" id="comment-6a010534b1db25970b01538f07b460970b-content">
+		<span id="comment-6a010534b1db25970b01538f07b460970b-content"><p>It seems like maybe the horizontal clusters are due to the fact that income varies on a much larger scale than age. Without renormalizing, the distance measures might be dominated by income.</p>
+
+<p>Does this seem right? If so, I might think this effect is more an artifact of the scale than a real pattern in the data. Renormalizing so that each variable is on the same scale might be reasonable.</p>
+
+<p>I&#39;m asking without any prior knowledge of k-means or the functions you&#39;re using, so I apologize if my ignorance is resulting in a silly question.</p>
+
+<p>Thanks,<br />
+David</p></span>
+	</div>
+	<p class="comment-footer">
+		Posted by:
+		<a rel="nofollow" target="_blank" title="http://www.learnfromdata.com" href="http://www.learnfromdata.com">DavidC</a> |
+		<a rel="nofollow" href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html?cid=6a010534b1db25970b01538f07b460970b#comment-6a010534b1db25970b01538f07b460970b">June 07, 2011 at 19:21</a>
+	</p>
+</div><a id="c6a010534b1db25970b01676564c7d0970b"></a>
+<div class="comment comment-even" id="comment-6a010534b1db25970b01676564c7d0970b">
+	<div class="comment-content" id="comment-6a010534b1db25970b01676564c7d0970b-content">
+		<span id="comment-6a010534b1db25970b01676564c7d0970b-content"><p>Can you explain what the &quot;~ age + incwage&quot; argument represents, and how we can get it to run kmeans on the elements in the vectors?</p>
+
+<p>Also, what format is datafile in, and can we simply use an existing xdf (from a csv using import) instead of including the lines <br />
+rxGetInfoXdf(dataFile, getVarInfo=TRUE)<br />
+rxDataStepXdf(inFile=dataFile, outFile=&quot;AgeInc&quot;, <br />
+varsToKeep =c(&quot;age&quot;,&quot;incwage&quot;),overwrite=TRUE) <br />
+?</p>
+
+<p>Thanks. </p></span>
+	</div>
+	<p class="comment-footer">
+		Posted by:
+		Robert |
+		<a rel="nofollow" href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html?cid=6a010534b1db25970b01676564c7d0970b#comment-6a010534b1db25970b01676564c7d0970b">April 19, 2012 at 09:26</a>
+	</p>
+</div><a id="c6a010534b1db25970b017744df2195970d"></a>
+<div class="comment comment-odd" id="comment-6a010534b1db25970b017744df2195970d">
+	<div class="comment-content" id="comment-6a010534b1db25970b017744df2195970d-content">
+		<span id="comment-6a010534b1db25970b017744df2195970d-content"><p>Can we use it to cluster30k point in 49 dimentional space to find 4-5 clusters?<br />
+I do not care if it gets long time (in order of 1-2 days),if it gives me some good result.<br />
+I use a  quad core pc with 16MB RAM.<br />
+Thanks </p></span>
+	</div>
+	<p class="comment-footer">
+		Posted by:
+		math |
+		<a rel="nofollow" href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html?cid=6a010534b1db25970b017744df2195970d#comment-6a010534b1db25970b017744df2195970d">September 20, 2012 at 06:26</a>
+	</p>
+</div><a id="c6a010534b1db25970b017744df22c4970d"></a>
+<div class="comment comment-even" id="comment-6a010534b1db25970b017744df22c4970d">
+	<div class="comment-content" id="comment-6a010534b1db25970b017744df22c4970d-content">
+		<span id="comment-6a010534b1db25970b017744df22c4970d-content"><p>30kpoint= 30k points= 30000 vector of sie 49! ;)</p></span>
+	</div>
+	<p class="comment-footer">
+		Posted by:
+		math |
+		<a rel="nofollow" href="http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html?cid=6a010534b1db25970b017744df22c4970d#comment-6a010534b1db25970b017744df22c4970d">September 20, 2012 at 06:27</a>
+	</p>
+</div>
+
+		</div>
+        
+	</div>
+    	<!-- comment-form-atp -->
+
+	
+<div id="atp-comments">
+    
+        <div id="comment-preview" class="hiddenBox">
+	<h3 id="header-verify-comment" class="comments-header hiddenBox">Verify your Comment</h3>
+    <h3 id="header-preview-comment" class="comments-header hiddenBox">Previewing your Comment</h3>
+	<div class="comments-content">
+		<div class="comment">
+			<div id="comment-preview-content" class="comment-content">
+			</div>
+			<p class="comment-footer">
+				Posted by: 
+				<span id="comment-preview-author"></span>&nbsp;|&nbsp;<span id="comment-preview-datetime"></span>
+			</p>
+		</div>
+	</div>
+</div>
+<div id="comment-preview-confirmation" class="hiddenBox yellowBox">
+    <p>This is only a preview. Your comment has not yet been posted.</p>
+   	<form id="comment-preview-form"
+   		method="post"
+   		onsubmit="atpComments.interceptPost(1); return false;">
+		<input type="submit" name="post" id="comment-confirm-post" value="&nbsp;Post&nbsp;" onclick="atpComments.interceptPost(1); return false;"/>		    
+		<input type="submit" name="edit" id="comment-edit" value="&nbsp;&nbsp;Edit&nbsp;&nbsp;" onclick="atpComments.previewOnly(2); return false;"/>
+        <span id="previewFormSpinner" class="hiddenBox"><img src="/.shared/images/spinner.gif" alt="Working..." /></span>
+	</form>
+</div>
+<div id="comment-error" class="hiddenBox redBox">	    
+   Your comment could not be posted. Error type: <span id="comment-error-msg"></span> 
+</div>	
+<div id="comment-complete" class="hiddenBox yellowGreenBox">
+    Your comment has been posted. <a href="javascript:void 0;" onclick="window.location.hash='#comment-form';window.location.reload(false)">Post another comment</a>
+</div>	
+<div id="comment-captcha" class="hiddenBox yellowBox">	
+    <div id="captchaText">
+	    <p id="captchaFailMsg" class="captchaErrorText hiddenBox">The letters and numbers you entered did not match the image. Please try again.</p>	    	        
+	    <p>As a final step before posting your comment, enter the letters and numbers you see in the image below. This prevents automated programs from posting comments.</p>
+	    <p><span id="comment-captcha-viewalt">Having trouble reading this image? <a href="#comment-captcha" onClick="atpComments.generateReCaptcha();">View an alternate.</a></span></p>
+    </div>
+    <form id="comment-captcha-form" 
+		  method="post"
+		  onsubmit="atpComments.submitWithReCaptcha(); return false;">
+    <div id="recaptcha_content">
+      <noscript>
+        <iframe src="6Ldg1s4SAAAAAEvvZX2ILFkWp7KB-jjdL4v0JV2e" height="300" width="500" frameborder="0"></iframe><br />
+        <textarea name="recaptcha_challenge_field" rows="3" cols="40"></textarea>
+        <input type='hidden' name='recaptcha_response_field' value='manual_challenge' />
+      </noscript>
+    </div>
+  <script type="text/javascript">
+    $(document).ready(function() {
+        Recaptcha.create("6Ldg1s4SAAAAAEvvZX2ILFkWp7KB-jjdL4v0JV2e",
+                         "recaptcha_content", {
+                             theme: "red",
+                             callback: Recaptcha.focus_response_field
+        });
+    });
+  </script>
+        <p>
+            <input type="submit" name="continue" id="captcha-continue" value="&nbsp;Continue&nbsp;" />
+            <span id="captchaFormSpinner" class="commentSpinner hiddenBox"><img src="/.shared/images/spinner.gif" alt="Working..." /></span>
+        </p>
+    </form>
+</div>
+
+    
+	<div id="primary-comment-form" class="comment-form">
+    	<form id="comment-form" action="http://blog.revolutionanalytics.com/.services/comments"
+    		method="post">
+    		<input type="hidden" name="entry_xid" id="comment-entry-xid" value="6a010534b1db25970b015432631694970c" />
+                <input type="hidden" name="token" value="1364504222-9535e27867b2ac532386f56780941624e1ac7a49:6ZyV8OUM8yvlSDm3" />
+    		<div class="comments-open">
+    			<h2 class="comments-open-header" id="comment-title">Post a comment</h2>
+    			<div id="comments-open-content" class="comments-open-content">
+    				
+				
+    				
+                    	<div id="comments-open-text" style="display:none;">
+        					<textarea id="comment-text" name="text" rows="10" cols="30" onkeyup="atpComments.maxTextArea(this, 64000);"></textarea>
+            				
+            				<p class="comments-open-subtext">
+            				    (You can use HTML tags like &lt;b&gt; &lt;i&gt; and &lt;ul&gt; to style your text.)
+            				</p>			
+            				                    					
+        				</div>
+    				    <div id="comments-open-data" style="display:none;">
+                            <p>Your Information</p>
+                            <p>
+                                (Name and email address are required. Email address will not be displayed with the comment.)
+                            
+                            </p>
+    						<p>
+    							<input id="comment-author" at:default="Name" name="author" size="30" value="Name" onfocus="if(this.value==this.getAttribute('at:default')) this.value='';"  onBlur="if(this.value=='') this.value=this.getAttribute('at:default');" class="grayText"/>
+    							<label for="comment-author" id="comment-author-error" class="comment-error hiddenBox">Name is required to post a comment</label>
+    						</p>
+    						<p>
+    							<input id="comment-email" at:default="Email Address" name="email" size="30" value="Email Address" onfocus="if(this.value==this.getAttribute('at:default')) this.value='';"  onBlur="if(this.value=='') this.value=this.getAttribute('at:default');" class="grayText"/>
+    							<label for="comment-email" id="comment-email-error" class="comment-error hiddenBox">Please enter a valid email address</label>
+    						</p>
+    						<p>
+    							<input id="comment-url" at:default="Web Site URL" name="url" size="30" value="Web Site URL" onfocus="if(this.value==this.getAttribute('at:default')) this.value='';"  onBlur="if(this.value=='') this.value=this.getAttribute('at:default');" class="grayText"/>
+    							<label for="comment-url" id="comment-url-error" class="comment-error hiddenBox">Invalid URL</label>
+    						</p>
+    					</div>
+    			</div>
+                <div id="comments-open-footer" class="comments-open-footer" style="display:none;">
+    				<input type="submit" name="post" id="comment-post-button" value="&nbsp;Post&nbsp;" onclick="atpComments.interceptPost(1); return false;" disabled="true" />
+    				<input type="submit" name="preview" id="comment-preview-button" value="&nbsp;Preview&nbsp;" onclick="atpComments.previewOnly(1); return false;" disabled="true" />
+    				<span id="commentEntryFormSpinner" class="commentSpinner hiddenBox"><img src="/.shared/images/spinner.gif" alt="Working..." /></span>
+    			</div>
+    		</div>
+    	</form>
+        <noscript>
+            
+			<div id="comments-open-noscript" class="comments-open-noscript">
+		        <form action="http://blog.revolutionanalytics.com/.services/comments" method="post">
+		            <input type="hidden" name="entry_xid" id="comment-entry-xid" value="6a010534b1db25970b015432631694970c" />
+                            <input type="hidden" name="token" value="1364504222-d3381c03f09c917b42daef69c71941f9dd84bd2e:g8zSv0q96CgMEBYq" />
+		            Name:<br /><input type="text" name="author" size="30" /><br />
+		            Email address:<br /><input type="text" name="email" size="30" /><br />
+		            URL:<br /><input type="text" name="url" size="30" /><br /><br />
+		            Comment:<br /><textarea name="text" cols="40" rows="4"></textarea><br />
+		            
+		            <input type="submit" name="submit" value="Submit" />
+		        </form>
+			</div>
+			
+		</noscript>
+	</div>
+</div>
+
+
+
+    	
+
+
+						</div>
+					</div>
+					<div id="beta">
+						<div id="beta-inner" class="pkg">
+							
+<!-- sidebar -->
+
+
+	<div class="module-archives module">
+		<h2 class="module-header">Information</h2>
+		<div class="module-content">
+			<ul class="module-list">
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/about.html">About this blog</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/comments-policy.html">Comments Policy</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/categories.html">About Categories</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/authors.html">About the Authors</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/calendar.html">R Community Calendar</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/local-r-groups.html">Local R User Group Directory</a></li>
+				
+			</ul>
+		</div>
+	</div>
+<div class="module-custom_html module">
+    <div class="module-content">
+<p><a href="http://www.revolutionanalytics.com/"><img src="http://revolution-computing.typepad.com/imagesRev/RA_logo_trans1.75in.png"></a><br />R for the Enterprise</p>
+    </div>
+</div>
+<div class="module-custom_html module">
+    <div class="module-content">
+Got comments or suggestions for the blog editor? <br>
+Email <a href="mailto:david@revolution-computing.com">David Smith</a>.
+    </div>
+</div>
+<div class="module-custom_html module">
+    <div class="module-content">
+<a href="http://www.twitter.com/revodavid"><img src="http://twitter-badges.s3.amazonaws.com/t_small-b.png" alt="Follow revodavid on Twitter"/></a> Follow David on Twitter: <a href="http://twitter.com/revodavid">@revodavid</a><br>
+<img src="http://www.google.com/images/icons/ui/gprofile_button-16.png" width="16" height="16">
+<a rel="author" href="https://plus.google.com/113975782306391318324/about?rel=author">+David Smith</a>
+    </div>
+</div>
+<div class="module-custom_html module">
+    <div class="module-content">
+<a href="http://inside-r.org/download" title="Download R"><img src="http://inside-r.org/sites/all/themes/rweb/assets/badges/download-r-badge-125-blue.png" border="0" /></a>
+    </div>
+</div>
+<div class="module-syndicate module">
+	<div class="module-content">
+		<a href="http://blog.revolutionanalytics.com/atom.xml">Subscribe to this blog's feed</a>
+	</div>
+</div>
+<div class="module-categories module">
+	<h2 class="module-header"><a href="http://blog.revolutionanalytics.com/archives.html">Categories</a></h2>
+	<div class="module-content">
+		<ul class="module-list">
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/academia/">academia</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/advanced-tips/">advanced tips</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/announcements/">announcements</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/applications/">applications</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/beginner-tips/">beginner tips</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/big-data/">big data</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/courses/">courses</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/current-events/">current events</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/data-science/">data science</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/developers/">developer tips</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/events/">events</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/finance/">finance</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/government/">government</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/graphics/">graphics</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/high-performance-computing/">high-performance computing</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/life-sciences/">life sciences</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/open-source/">open source</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/other-industry/">other industry</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/packages/">packages</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/predictive-analytics/">predictive analytics</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/profiles/">profiles</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/r/">R</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/r-is-hot/">R is Hot</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/random/">random</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/revolution/">Revolution</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/rmedia/">Rmedia</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/roundups/">roundups</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/sports-1/">sports</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/statistics/">statistics</a></li>
+			<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/user-groups/">user groups</a></li>
+		</ul>
+	</div>
+</div>
+<div class="module-typelist module">
+	<h2 class="module-header">R links</h2>
+	<div class="module-content">
+		<ul class="module-list">
+							<li class="module-list-item"><a href="http://cran.revolutionanalytics.com/">CRAN</a><br />Packages for R</li>
+							<li class="module-list-item"><a href="http://inside-R.org">inside-R.org, the R Community Site</a><br />Sponsored by Revolution Analytics</li>
+							<li class="module-list-item"><a href="http://www.revolutionanalytics.com/">Revolution Analytics</a><br />Information about Revolution R</li>
+							<li class="module-list-item"><a href="http://www.revolutionanalytics.com/downloads/">Download Revolution R</a><br />Free, high-performance distribution of R</li>
+							<li class="module-list-item"><a href="http://forums.revolutionanalytics.com">Revolution R forum</a><br />Questions and discussions about Revolution R</li>
+							<li class="module-list-item"><a href="http://www.r-project.org">R Project site</a><br />Information about the R project</li>
+			
+		</ul>
+	</div>
+</div>
+
+<div class="module-typelist module">
+	<h2 class="module-header">Recommended Sites</h2>
+	<div class="module-content">
+		<ul class="module-list">
+							<li class="module-list-item"><a href="http://flowingdata.com">FlowingData</a><br />Modern data visualization</li>
+							<li class="module-list-item"><a href="http://onertipaday.blogspot.com/">One R Tip A Day</a><br />Code examples for graphics and analysis</li>
+							<li class="module-list-item"><a href="http://www.statisticsblog.com/">Probability and statistics blog</a><br />Monte Carlo simulations in R</li>
+							<li class="module-list-item"><a href="http://www.r-bloggers.com">R Bloggers</a><br />Daily news and tutorials about R, contributed by R bloggers worldwide.</li>
+							<li class="module-list-item"><a href="http://www.analyticbridge.com/group/rprojectandotherfreesoftwaretools">R Project group on analyticbridge.com</a><br />Community and discussion forum</li>
+							<li class="module-list-item"><a href="http://www.stat.columbia.edu/~cook/movabletype/mlm/">Statistical Modeling, Causal Inference, and Social Science</a><br />Andrew Gelman's statistics blog</li>
+							<li class="module-list-item"><a href="http://www.dataists.com/">The Dataists</a><br />Innovative and practical data analysis methodology.</li>
+			
+		</ul>
+	</div>
+</div>
+
+	<div class="module-archives module">
+		<h2 class="module-header"><a href="http://blog.revolutionanalytics.com/archives.html">Archives</a></h2>
+		<div class="module-content">
+			<ul class="module-list">
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2013/03/index.html">March 2013</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2013/02/index.html">February 2013</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2013/01/index.html">January 2013</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2012/12/index.html">December 2012</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2012/11/index.html">November 2012</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2012/10/index.html">October 2012</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2012/09/index.html">September 2012</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2012/08/index.html">August 2012</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2012/07/index.html">July 2012</a></li>
+									<li class="module-list-item"><a href="http://blog.revolutionanalytics.com/2012/06/index.html">June 2012</a></li>
+				
+			</ul>
+		</div>
+	</div>
+
+<div class="module-typelist module">
+	<h2 class="module-header">Search Revolutions Blog</h2>
+	<div class="typelist-plain module-content">
+		<ul class="module-list">
+							<li class="module-list-item"><div class="typelist-note"><form method="get" action="http://www.google.com/search">
+  <input type="hidden" name="ie" value="UTF-8" /> 
+  <input type="hidden" name="oe" value="UTF-8" />
+  <div style="background-color:white;"></div>
+   <input type="text" name="q" size="18" maxlength="255" value="" />
+  <input type="submit" name="btnG" value=" Search Blog " />
+   <br />
+<small>
+    <input type="hidden" name="domains" value="blog.revolutionanalytics.com" />
+<br />
+    <input type="hidden" name="sitesearch" value="blog.revolutionanalytics.com" checked="checked" />
+   <br /></small>
+</form>
+ <!-- SiteSearch Google --></div></li>
+			
+		</ul>
+	</div>
+</div>
+
+<div class="module-custom_html module">
+    <div class="module-content">
+<script src="http://munchkin.marketo.net/munchkin.js" type="text/javascript"></script>
+<script>mktoMunchkin("224-FMR-259");</script>
+    </div>
+</div>
+<div class="module-custom_html module">
+    <div class="module-content">
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var firstTracker = _gat._getTracker("UA-6984166-10");
+firstTracker._setDomainName(".revolutionanalytics.com");
+firstTracker._setAllowLinker(true);
+firstTracker._setAllowHash(false);
+firstTracker._trackPageview();
+var secondTracker = _gat._getTracker("UA-6984166-9");
+secondTracker._setDomainName(".revolutionanalytics.com");
+secondTracker._setAllowLinker(true);
+secondTracker._setAllowHash(false);
+secondTracker._trackPageview();
+} catch (err) { }
+</script>
+    </div>
+</div>
+
+
+
+
+
+						</div>
+					</div>
+				</div>
+			</div>
+			
+
+		</div>
+	</div>
+	
+
+<script type="text/javascript">
+<!--
+var extra_happy = Math.floor(1000000000 * Math.random());
+document.write('<img src="http://www.typepad.com/t/stats?blog_id=1774446&amp;user_id=3164880&amp;page=' + escape(location.href) + '&amp;referrer=' + escape(document.referrer) + '&amp;i=' + extra_happy + '" width="1" height="1" alt="" style="position: absolute; top: 0; left: 0;" />');
+// -->
+</script>
+
+
+<!-- Start Quantcast tag -->
+<script type="text/javascript" src="http://edge.quantserve.com/quant.js"></script>
+<script type="text/javascript">_qoptions = { tags:"typepad.extended" }; _qacct="p-fcYWUmj5YbYKM"; quantserve();</script>
+<noscript>
+<a href="http://www.quantcast.com/p-fcYWUmj5YbYKM" target="_blank"><img src="http://pixel.quantserve.com/pixel/p-fcYWUmj5YbYKM.gif?tags=typepad.extended" style="display: none" border="0" height="1" width="1" alt="Quantcast"/></a>
+</noscript>
+<!-- End Quantcast tag -->
+
+<script type="text/javascript" src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
+<script type="text/javascript">
+var captchaImgAttempts = 0;
+var allowAnonComments = '0';
+var registrationRequired = 0;
+var registrationOptional = 0;
+var emailRequired = 1;
+var useAvatars = 0;
+
+var showSignInMessaging = 0;
+var jsonURL = "/.services/json-rpc";
+
+var captchaSrc = "/.services/captcha?code_encrypted=";
+var alertCommentCannotBeBlank = "You can not leave an empty comment. Please enter some text in the Comment field.";
+var alertEditingExpired = "Sorry, you're no longer allowed to edit this comment. You may have taken too much time before submitting your edit or someone may have already replied to it.";
+
+var alertAuthorCannotBeBlank = "Name must not be blank.";
+var alertEmailCannotBeBlank = "Email Address must not be blank.";
+var alertAuthorAndEmailCannotBeBlank = "Name and email address are both required!";
+var alertEmailIsInvalid = "The Email Address you entered is invalid. Please enter a valid email address.";
+var alertUnauthorizedAction = "The comments on this post are closed.";
+var msgPostReplyTo = "Reply to ";  
+var msgInReplyTo = "In reply to ";
+var msgPostAComment = "Post a comment ";
+var atpCommentsPath = "/.shared/js/atpcomments_yui.js?v=5";
+var hasChanged = 0;
+var hostName = ".revolutionanalytics.com";
+var tp_comment_token = "1364504222-cbbe6190c2109c4cfd3ae7456d057b9779d0b013:S9RN3Ga9iiD8uS0f";
+
+var use_recaptcha = 1;
+var recaptcha_publickey = "6Ldg1s4SAAAAAEvvZX2ILFkWp7KB-jjdL4v0JV2e";
+var isPage = 0;
+var blog_xid = "6a010534b1db25970b010536040741970b";
+var xid = "";
+var injectCode = '<div id=\"comment-preview\" class=\"hiddenBox\">\n\t<h3 id=\"header-verify-comment\" class=\"comments-header hiddenBox\">Verify your Comment<\/h3>\n    <h3 id=\"header-preview-comment\" class=\"comments-header hiddenBox\">Previewing your Comment<\/h3>\n\t<div class=\"comments-content\">\n\t\t<div class=\"comment\">\n\t\t\t<div id=\"comment-preview-content\" class=\"comment-content\">\n\t\t\t<\/div>\n\t\t\t<p class=\"comment-footer\">\n\t\t\t\tPosted by: \n\t\t\t\t<span id=\"comment-preview-author\"><\/span>&nbsp;|&nbsp;<span id=\"comment-preview-datetime\"><\/span>\n\t\t\t<\/p>\n\t\t<\/div>\n\t<\/div>\n<\/div>\n<div id=\"comment-preview-confirmation\" class=\"hiddenBox yellowBox\">\n    <p>This is only a preview. Your comment has not yet been posted.<\/p>\n   \t<form id=\"comment-preview-form\"\n   \t\tmethod=\"post\"\n   \t\tonsubmit=\"atpComments.interceptPost(1); return false;\">\n\t\t<input type=\"submit\" name=\"post\" id=\"comment-confirm-post\" value=\"&nbsp;Post&nbsp;\" onclick=\"atpComments.interceptPost(1); return false;\"/>\t\t    \n\t\t<input type=\"submit\" name=\"edit\" id=\"comment-edit\" value=\"&nbsp;&nbsp;Edit&nbsp;&nbsp;\" onclick=\"atpComments.previewOnly(2); return false;\"/>\n        <span id=\"previewFormSpinner\" class=\"hiddenBox\"><img src=\"/.shared/images/spinner.gif\" alt=\"Working...\" /><\/span>\n\t<\/form>\n<\/div>\n<div id=\"comment-error\" class=\"hiddenBox redBox\">\t    \n   Your comment could not be posted. Error type: <span id=\"comment-error-msg\"><\/span> \n<\/div>\t\n<div id=\"comment-complete\" class=\"hiddenBox yellowGreenBox\">\n    Your comment has been posted. <a href=\"javascript:void 0;\" onclick=\"window.location.hash=\'#comment-form\';window.location.reload(false)\">Post another comment<\/a>\n<\/div>\t\n<div id=\"comment-captcha\" class=\"hiddenBox yellowBox\">\t\n    <div id=\"captchaText\">\n\t    <p id=\"captchaFailMsg\" class=\"captchaErrorText hiddenBox\">The letters and numbers you entered did not match the image. Please try again.<\/p>\t    \t        \n\t    <p>As a final step before posting your comment, enter the letters and numbers you see in the image below. This prevents automated programs from posting comments.<\/p>\n\t    <p><span id=\"comment-captcha-viewalt\">Having trouble reading this image? <a href=\"#comment-captcha\" onClick=\"atpComments.generateReCaptcha();\">View an alternate.<\/a><\/span><\/p>\n    <\/div>\n    <form id=\"comment-captcha-form\" \n\t\t  method=\"post\"\n\t\t  onsubmit=\"atpComments.submitWithReCaptcha(); return false;\">\n    <div id=\"recaptcha_content\">\n      <noscript>\n        <iframe src=\"6Ldg1s4SAAAAAEvvZX2ILFkWp7KB-jjdL4v0JV2e\" height=\"300\" width=\"500\" frameborder=\"0\"><\/iframe><br />\n        <textarea name=\"recaptcha_challenge_field\" rows=\"3\" cols=\"40\"><\/textarea>\n        <input type=\'hidden\' name=\'recaptcha_response_field\' value=\'manual_challenge\' />\n      <\/noscript>\n    <\/div>\n  <script type=\"text/javascript\">\n    $(document).ready(function() {\n        Recaptcha.create(\"6Ldg1s4SAAAAAEvvZX2ILFkWp7KB-jjdL4v0JV2e\",\n                         \"recaptcha_content\", {\n                             theme: \"red\",\n                             callback: Recaptcha.focus_response_field\n        });\n    });\n  <\/script>\n        <p>\n            <input type=\"submit\" name=\"continue\" id=\"captcha-continue\" value=\"&nbsp;Continue&nbsp;\" />\n            <span id=\"captchaFormSpinner\" class=\"commentSpinner hiddenBox\"><img src=\"/.shared/images/spinner.gif\" alt=\"Working...\" /><\/span>\n        <\/p>\n    <\/form>\n<\/div>\n'; 
+var entryPermalink = "http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html";
+var inlineReply = document.createElement("div");
+var commentFooterLinks;
+var commentHeader;
+var commentReplyXID;
+var commentReplyAuthor;
+var commentReplyComplete;
+var inlineReplyLoaded = 0;
+var commentFormNum = undefined; /* Deprecated but still exists in advanced template sets, so must be defined */
+
+function xidToCommentPermalink (entryUrl, xid) {
+    return entryUrl + "?cid=" + xid + "#comment-" + xid;
+}
+
+
+/* Deprecated advanced template functions */
+function handleSubmit() { return true; };
+function handleChange() { return true; };
+</script>
+<script type="text/javascript" src="/.shared/js/yui/yuiloader-beta-min.js"></script>
+<script type="text/javascript" src="/.shared/js/atpcomments.js?v=5"></script>
+
+
+
+ 
+
+<!-- Blogside Toolbar -->
+<script type="text/javascript">
+    var TPToolbar = {
+        src:   "http://www.typepad.com/services/toolbar?blog_id=6a010534b1db25970b010536040741970b&asset_id=6a010534b1db25970b015432631694970c&atype=Individual&to=http%3A%2F%2Fblog.revolutionanalytics.com%2F2011%2F06%2Fkmeans-big-data.html&autofollowed=0",
+        asset_xid: "6a010534b1db25970b015432631694970c",
+    
+        bookmarklet_uri: "http://static.typepad.com/.shared/js/qp/loader-combined-min.js"
+    };
+    var TYPEPAD___bookmarklet_domain = "http://www.typepad.com/";
+</script>
+<script type="text/javascript" src="/.shared/js/toolbar/blogside-toolbar-combined-min.js"></script>
+<!-- End Blogside Toolbar -->
+<!-- Begin comScore Tag -->
+<script>
+document.write(unescape("%3Cscript src='" + (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js'%3E%3C/script%3E"));
+</script>
+<script>
+COMSCORE.beacon({
+  c1: 2,
+  c2: "6035669",
+  c3: "",
+  c4: "http://blog.revolutionanalytics.com/2011/06/kmeans-big-data.html",
+  c5: "",
+  c6: "",
+  c15: ""
+});
+</script>
+<noscript>
+  <img src="http://b.scorecardresearch.com/b?c1=2&c2=6035669&c3=&c4=http%3A%2F%2Fblog.revolutionanalytics.com%2F2011%2F06%2Fkmeans-big-data.html&c5=&c6=&c15=&cv=1.3&cj=1" style="display:none" width="0" height="0" alt="" />
+</noscript>
+<!-- End comScore Tag -->
+</body>
+</html>
+<!-- ph=1 -->
