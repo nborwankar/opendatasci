@@ -8,15 +8,19 @@ sort(round(runif(12, min=23, max=47)))
 sort(round(runif(12, min=5, max=32)))
 # [1]  8 10 11 15 16 16 19 24 25 26 28 29
 
-loss <- sort(round(runif(12, min=5, max=32)))
+# junk above
+###########################
+
+set.seed(10)
+loss <- sort(round(runif(12, min=5, max=26)))
+set.seed(15)
 win <- sort(round(runif(12, min=23, max=47)))
 lossout <- c(rep(0,12))
 winout <- c(rep(1,12))
 alloutcomes <- append(lossout, winout)
 rawscores <- append(loss,win)
 data <- data.frame("scores"=rawscores, "outcomes"=alloutcomes)
+#names(data)
+plot(data$outcomes ~ data$scores, pch=19, xlab="Score", ylab="Probability Of Win")
 
-names(data)
-#[1] "scores"   "outcomes"
-
-plot(data$outcomes ~ data$scores)
+abline(a=-0.7, b=0.05)
