@@ -1,9 +1,0 @@
-
-
-* do PCA on mobile data set
-* identify top 10-15 variables
-* use domain analysis to reduce vars
-
-* clusters that identify 6 activities - correlation
-* how to do proper clustering example
-* do 

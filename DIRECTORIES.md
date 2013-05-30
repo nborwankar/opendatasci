@@ -8,3 +8,4 @@
 ### bookshelf - random pdf's html pages etc that might be useful or relevant - picked up dueing research
 ### scripts - any R, Py or other scripts used in data prep or image gen etc
 ### styles - css and matplotlibrc files from Probabilistic Programming github repo, courtesy author
+### lib - place to put custom and third-party libs
