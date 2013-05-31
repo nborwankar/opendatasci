@@ -50,10 +50,5 @@ def nfl_outcomes_with_line():
 
 
 def fz(fico,amt,coeff):
-  """
-  pred = dot(transpose(coeff),array[1,fico,amt] 
-  return 1/(1+exp(-1*pred))
-  """
-"""
-print(fz(720,10000))
-"""
+  z = coeff[0]+coeff[1]*fico+coeff[2]*amt
+  return 1/(1+exp(-1*z))

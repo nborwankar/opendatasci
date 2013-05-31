@@ -117,7 +117,6 @@ def two_lab_experiments(seed1=12345,seed2=123456):
     return
   
     
-
 def linreg_example(x=None,y=None):
     z = 0.65*make_standard_normal(size=20)
     if x is None:
@@ -143,7 +142,6 @@ def linreg_sm(x,y):
 ############### Exploration ##############
 
 
-
 def make_hist():
   plt.figure()
   loansmin = pd.read_csv('../datasets/loanf.csv')
@@ -164,9 +162,8 @@ def make_boxplot():
   
 
 ############## Analysis ###############
-
 """
-
+# this goes as full script in notebook
 import pylab as pl
 import numpy as np
 #from sklearn import datasets, linear_model
@@ -202,7 +199,6 @@ print 'P-Values: ', f.pvalues
 print 'R-Squared: ', f.rsquared
 
 """
-
 
 
 
