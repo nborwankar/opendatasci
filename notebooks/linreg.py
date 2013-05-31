@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import patsy 
+#import patsy 
 import statsmodels.api as sm
 from numpy.random import RandomState
 
