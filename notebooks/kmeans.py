@@ -58,21 +58,3 @@ def plot_clusters(orig,pred,nx,ny,legend=True):
     ll=plt.legend()  
   return (p0,p1,p2)
   
-"""  
-data = X
-p0 = plot(data[c==0,3],data[c==0,0],'ro',label='Underdeveloped')
-p2 = plot(data[c==2,3],data[c==2,0],'go',label='Developing') 
-p1 = plot(data[c==1,3],data[c==1,0],'bo',label='Developed') 
-lx = p1[0].axes.set_xlabel('Per Capita GDP in US$')
-ly = p1[0].axes.set_ylabel('Male Life Expectancy in yrs')
-tt= title('UN countries Dataset, KMeans clustering with K=3')
-#ll=legend() 
-
-data = X
-p0 = plot(data[c==0,3],data[c==0,1],'ro',label='Underdeveloped')
-p2 = plot(data[c==2,3],data[c==2,1],'go',label='Developing') 
-p1 = plot(data[c==1,3],data[c==1,1],'bo',label='Developed') 
-lx = p1[0].axes.set_xlabel('Per Capita GDP in US$')
-ly = p1[0].axes.set_ylabel('Female Life Expectancy in yrs')
-tt= title('UN countries Dataset, KMeans clustering with K=3') 
-"""
