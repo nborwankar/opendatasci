@@ -75,17 +75,26 @@ def make_single_plot(xarr,yarr,xlabel=None,ylabel=None,title=None, xinches=4, yi
     return ax1
     
     
-def lab_experiment(noise_factor=0.5,seed=12345):
+def lab_experiment(noise_factor=0.5,seed=12345, exptnum=0):
     global np, plt
     x, y = make_data_points(noise_factor,seed)
-    ax = make_single_plot(x,y,'Force','Acceleration','Lab Experiment')
+    if exptnum:
+      title = "Lab Experiment %d"%(exptnum)
+    else:
+      title = "Lab Experiment"  
+
+    ax = make_single_plot(x,y,'Force','Acceleration', title)
     return ax
 
     
-def lab_experiment_with_line(noise_factor=0.5, gradient_offset=0, intercept_offset=0, style='r', linewidth=1, seed=12345):
+def lab_experiment_with_line(noise_factor=0.5, gradient_offset=0, intercept_offset=0, style='r', linewidth=1, seed=12345, exptnum=0):
         
     x, y = make_data_points(noise_factor,seed)
-    ax = make_single_plot(x,y,'Force','Acceleration','Lab Experiment')
+    if exptnum:
+      title = "Lab Experiment %d"%(exptnum)
+    else:
+      title = "Lab Experiment"  
+    ax = make_single_plot(x,y,'Force','Acceleration', title)
     
     # statsmodel lin reg
     X = sm.add_constant(x)
@@ -95,27 +104,18 @@ def lab_experiment_with_line(noise_factor=0.5, gradient_offset=0, intercept_offs
     abline(intercept + intercept_offset,gradient+gradient_offset,style,linewidth)
     return    
 
-def two_lab_experiments(seed1=12345,seed2=123456):
-    global np, plt
-    f, (ax1, ax2) = plt.subplots(ncols=2)
-    f.set_size_inches(10, 5)
-    ax1 = plt.subplot(1,2,1)
-    ax1.set_xlabel('Force')
-    ax1.set_ylabel('Acceleration')
-    ax1.set_title('Lab Experiment 1')
-    
-    make_expt_plot(ax1,0.4,0.01,0.01,'c',2,seed1)
 
-    ax2 = plt.subplot(1,2,2)
-    ax2.set_xlabel('Force')
-    ax2.set_ylabel('Acceleration')
-    ax2.set_title('Lab Experiment 2')
-    
-    make_expt_plot(ax2,0.4,-0.32,0.5,'c',2,seed2)
-
-    f.tight_layout();
-    return
+def lab_expt_1():
+  return lab_experiment_with_line(exptnum=1)
   
+def lab_expt_2():
+  return lab_experiment_with_line(0.6,0.2,0.1,'g',1,123456,2)  
+
+
+def two_lab_experiments():
+  lab_expt_1()
+  lab_expt_2()
+  return  
     
 def linreg_example(x=None,y=None):
     z = 0.65*make_standard_normal(size=20)
